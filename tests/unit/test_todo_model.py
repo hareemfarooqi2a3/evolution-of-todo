@@ -1,6 +1,6 @@
 import pytest
 from pydantic import ValidationError
-from src.models.todo import Todo
+from models.todo import Todo
 
 def test_todo_creation():
     """

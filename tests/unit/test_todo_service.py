@@ -1,4 +1,4 @@
-from src.services.todo_service import TodoService
+from services.todo_service import TodoService
 
 def test_add_todo():
     """

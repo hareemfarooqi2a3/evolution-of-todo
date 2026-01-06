@@ -1,5 +1,5 @@
 from typing import List, Optional
-from src.models.todo import Todo
+from models.todo import Todo
 
 class TodoService:
     """
