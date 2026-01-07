@@ -1,11 +1,10 @@
 ---
-description: "Task list for Todo MVC feature implementation"
+description: "Task list for testing the Todo MVC console application"
 ---
 
-# Tasks: Todo MVC
+# Tasks: Testing the Todo Console UI
 
-**Input**: Design documents from `/specs/001-todo-crud/`
-**Prerequisites**: plan.md (required), spec.md (required for user stories)
+**Input**: This document provides instructions on how to test the CRUD (Create, Read, Update, Delete) functionality of the console application.
 
 ## Format: `[ID] [P?] [Story] Description`
 
@@ -13,112 +12,78 @@ description: "Task list for Todo MVC feature implementation"
 - **[Story]**: Which user story this task belongs to (e.g., US1, US2, US3)
 - Include exact file paths in descriptions
 
-## Phase 1: Setup (Shared Infrastructure)
+## Phase 1: Manual Testing from the Console
 
-**Purpose**: Project initialization and basic structure
+**Purpose**: To manually verify that each command works as expected from the command line. Run these commands from the root of the project directory.
 
-- [ ] T001 Create project structure (`src`, `tests`) per implementation plan
-- [ ] T002 Create empty Python files for model, service, and CLI (`src/models/todo.py`, `src/services/todo_service.py`, `src/cli/main.py`)
-- [ ] T003 Create empty test files (`tests/unit/test_todo_model.py`, `tests/unit/test_todo_service.py`, `tests/integration/test_cli.py`)
-- [ ] T004 Initialize `pyproject.toml` with `pytest` dependency.
+- [ ] T001 [US1] **Test Add**: Run the `add` command to create a new todo.
+  - **Command**: `python -m src.cli.main add --title "My First Todo" --description "A test description"`
+  - **Expected Output**: `Created todo with ID: 1 and Title: 'My First Todo'`
 
----
+- [ ] T002 [US2] **Test List**: Run the `list` command to see the newly created todo.
+  - **Command**: `python -m src.cli.main list`
+  - **Expected Output**: `[ ] 1: My First Todo`
 
-## Phase 2: Foundational (Blocking Prerequisites)
+- [ ] T003 [US3] **Test Complete**: Run the `complete` command to mark the todo as complete.
+  - **Command**: `python -m src.cli.main complete --id 1`
+  - **Expected Output**: `Todo 1 marked as complete.`
 
-**Purpose**: Core data model that MUST be complete before ANY user story can be implemented
+- [ ] T004 [US3] **Verify Complete**: Run the `list` command again to see the status change.
+  - **Command**: `python -m src.cli.main list`
+  - **Expected Output**: `[✔] 1: My First Todo`
 
-- [ ] T005 [US1] Implement the `Todo` data model in `src/models/todo.py` with fields: `id`, `title`, `description`, `completed`.
-- [ ] T006 [US1] Write a unit test for the `Todo` model in `tests/unit/test_todo_model.py` to verify its attributes.
+- [ ] T005 [US4] **Test Update**: Run the `update` command to change the todo's title.
+  - **Command**: `python -m src.cli.main update --id 1 --title "My Updated Todo"`
+  - **Expected Output**: `Todo 1 updated.`
 
-**Checkpoint**: Foundation ready - user story implementation can now begin.
+- [ ] T006 [US4] **Verify Update**: Run the `list` command again to see the updated title.
+  - **Command**: `python -m src.cli.main list`
+  - **Expected Output**: `[✔] 1: My Updated Todo`
 
----
+- [ ] T007 [US5] **Test Delete**: Run the `delete` command to remove the todo.
+  - **Command**: `python -m src.cli.main delete --id 1`
+  - **Expected Output**: `Todo 1 deleted.`
 
-## Phase 3: User Story 1 & 2 - Add and View Todos (Priority: P1) 🎯 MVP
-
-**Goal**: As a user, I want to add a new todo and see it in my list.
-
-**Independent Test**: A user can run `python -m cli.main add --title "My Task"` and then `python -m cli.main list` to see the new task.
-
-### Implementation for User Story 1 & 2
-
-- [ ] T007 [US1] Implement the `TodoService` class in `src/services/todo_service.py`.
-- [ ] T008 [US1] In `TodoService`, implement the `add_todo()` method.
-- [ ] T009 [US2] In `TodoService`, implement the `list_todos()` method.
-- [ ] T010 [US1,US2] Write unit tests for `add_todo()` and `list_todos()` in `tests/unit/test_todo_service.py`.
-- [ ] T011 [US1] Implement the `add` command in `src/cli/main.py`.
-- [ ] T012 [US2] Implement the `list` command in `src/cli/main.py`.
-- [ ] T013 [US1,US2] Write an integration test in `tests/integration/test_cli.py` to verify the `add` and `list` commands work together.
-
-**Checkpoint**: At this point, User Stories 1 & 2 should be fully functional and testable.
+- [ ] T008 [US5] **Verify Delete**: Run the `list` command a final time to ensure the list is empty.
+  - **Command**: `python -m src.cli.main list`
+  - **Expected Output**: `No todos yet.`
 
 ---
 
-## Phase 4: User Story 3 - Mark a todo as complete/incomplete (Priority: P2)
+## Phase 2: Automated Testing
 
-**Goal**: As a user, I want to mark a todo item as complete or incomplete to track my progress.
+**Purpose**: To run the full suite of automated tests to ensure all functionality works correctly and there are no regressions.
 
-**Independent Test**: A user can run `python -m cli.main complete --id 1` and see the status change in the `list` command output.
-
-### Implementation for User Story 3
-
-- [ ] T014 [US3] In `TodoService`, implement `get_todo_by_id()`, `complete_todo()`, and `uncomplete_todo()` methods in `src/services/todo_service.py`.
-- [ ] T015 [US3] Write unit tests for `complete_todo()` and `uncomplete_todo()` in `tests/unit/test_todo_service.py`.
-- [ ] T016 [US3] Implement the `complete` and `uncomplete` commands in `src/cli/main.py`.
-- [ ] T017 [US3] Write an integration test in `tests/integration/test_cli.py` for the `complete` and `uncomplete` commands.
-
-**Checkpoint**: User Story 3 should be fully functional and testable.
+- [ ] T009 **Run All Tests**: Execute the `pytest` command from the root of the project. This will discover and run all tests in the `tests/` directory.
+  - **Command**: `pytest`
+  - **Expected Output**: A summary showing that all tests passed (e.g., `_..._ passed in _..._s`).
 
 ---
 
-## Phase 5: User Story 4 - Update a todo (Priority: P2)
+## Phase 3: Writing a New Automated Test
 
-**Goal**: As a user, I want to edit the title and description of a todo item.
+**Purpose**: To extend the test suite with a new test case. This is a good practice to cover edge cases or new functionality.
 
-**Independent Test**: A user can run `python -m cli.main update --id 1 --title "New Title"` and see the updated title in the `list` command output.
+- [ ] T010 **Create a New Test Case**: Open the `tests/integration/test_cli.py` file and add a new test function to verify a specific behavior. For example, test adding a todo with a very long title.
+  - **File to Edit**: `tests/integration/test_cli.py`
+  - **Example Test**:
+    ```python
+    def test_add_command_long_title():
+        """
+        Tests the 'add' command with a very long title.
+        """
+        service = TodoService()
+        f = io.StringIO()
+        long_title = "a" * 1000
+        with redirect_stdout(f):
+            main(["add", "--title", long_title], todo_service=service)
+            main(["list"], todo_service=service)
+        
+        output = f.getvalue()
+        assert f"Created todo with ID: 1 and Title: '{long_title}'" in output
+        assert f"[ ] 1: {long_title}" in output
+    ```
 
-### Implementation for User Story 4
-
-- [ ] T018 [US4] In `TodoService`, implement the `update_todo()` method in `src/services/todo_service.py`.
-- [ ] T019 [US4] Write a unit test for `update_todo()` in `tests/unit/test_todo_service.py`.
-- [ ] T020 [US4] Implement the `update` command in `src/cli/main.py`.
-- [ ] T021 [US4] Write an integration test in `tests/integration/test_cli.py` for the `update` command.
-
-**Checkpoint**: User Story 4 should be fully functional and testable.
-
----
-
-## Phase 6: User Story 5 - Delete a todo (Priority: P3)
-
-**Goal**: As a user, I want to delete a todo item.
-
-**Independent Test**: A user can run `python -m cli.main delete --id 1`, and the todo will no longer appear in the `list` command output.
-
-### Implementation for User Story 5
-
-- [ ] T022 [US5] In `TodoService`, implement the `delete_todo()` method in `src/services/todo_service.py`.
-- [ ] T023 [US5] Write a unit test for `delete_todo()` in `tests/unit/test_todo_service.py`.
-- [ ] T024 [US5] Implement the `delete` command in `src/cli/main.py`.
-- [ ] T025 [US5] Write an integration test in `tests/integration/test_cli.py` for the `delete` command.
-
-**Checkpoint**: All user stories should now be independently functional.
-
----
-
-## Phase 7: Polish & Cross-Cutting Concerns
-
-**Purpose**: Improvements that affect multiple user stories.
-
-- [ ] T026 Add error handling for invalid todo IDs in `src/cli/main.py`.
-- [ ] T027 Add validation for empty titles in the `add` command in `src/cli/main.py`.
-- [ ] T028 Review and refine all console output for clarity.
-
----
-
-## Dependencies & Execution Order
-
-- **Setup (Phase 1)** must be completed before all other phases.
-- **Foundational (Phase 2)** depends on Setup completion.
-- **User Stories (Phases 3-6)** depend on the Foundational phase. They can be implemented sequentially or in parallel.
-- **Polish (Phase 7)** should be done after all user stories are complete.
+- [ ] T011 **Run the New Test**: Run `pytest` again and confirm that your new test is discovered and passes along with the existing tests.
+  - **Command**: `pytest`
+  - **Expected Output**: A summary showing that one more test passed.
