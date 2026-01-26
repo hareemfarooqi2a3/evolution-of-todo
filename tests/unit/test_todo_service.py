@@ -1,91 +1,104 @@
-from src.services.todo_service import TodoService
+import pytest
+from phase1_cli.src.services import TodoService
+from phase1_cli.src.models import Todo
 
-def test_add_todo():
-    """
-    Tests that a todo can be added to the service.
-    """
-    service = TodoService()
-    todo = service.add_todo(title="Test Todo", description="Test description")
+@pytest.fixture
+def todo_service():
+    """Provides a fresh TodoService instance for each test."""
+    return TodoService()
+
+def test_create_todo(todo_service: TodoService):
+    """Test creating a new todo."""
+    todo = todo_service.create_todo("Buy groceries", "Milk, Eggs, Bread")
     assert todo.id == 1
-    assert todo.title == "Test Todo"
-    assert todo.description == "Test description"
+    assert todo.title == "Buy groceries"
+    assert todo.description == "Milk, Eggs, Bread"
     assert not todo.completed
-    assert len(service.list_todos()) == 1
+    assert len(todo_service.get_all_todos()) == 1
 
-def test_list_todos():
-    """
-    Tests that all todos can be listed.
-    """
-    service = TodoService()
-    service.add_todo(title="Todo 1")
-    service.add_todo(title="Todo 2")
-    todos = service.list_todos()
-    assert len(todos) == 2
-    assert todos[0].title == "Todo 1"
-    assert todos[1].title == "Todo 2"
-
-def test_add_todo_increments_id():
-    """
-    Tests that the todo ID is auto-incremented.
-    """
-    service = TodoService()
-    todo1 = service.add_todo(title="Todo 1")
-    todo2 = service.add_todo(title="Todo 2")
-    assert todo1.id == 1
+    todo2 = todo_service.create_todo("Walk the dog")
     assert todo2.id == 2
+    assert todo2.title == "Walk the dog"
+    assert todo2.description is None
+    assert not todo2.completed
+    assert len(todo_service.get_all_todos()) == 2
 
-def test_get_todo_by_id():
-    """
-    Tests that a todo can be retrieved by its ID.
-    """
-    service = TodoService()
-    todo1 = service.add_todo(title="Todo 1")
-    retrieved_todo = service.get_todo_by_id(todo1.id)
-    assert retrieved_todo == todo1
-    assert service.get_todo_by_id(999) is None
+def test_create_todo_empty_title(todo_service: TodoService):
+    """Test creating a todo with an empty title."""
+    with pytest.raises(ValueError, match="Title cannot be empty."):
+        todo_service.create_todo("")
 
-def test_complete_todo():
-    """
-    Tests that a todo can be marked as complete.
-    """
-    service = TodoService()
-    todo = service.add_todo(title="Test Todo")
-    assert not todo.completed
-    updated_todo = service.complete_todo(todo.id)
+def test_get_all_todos(todo_service: TodoService):
+    """Test retrieving all todos."""
+    assert len(todo_service.get_all_todos()) == 0
+    todo_service.create_todo("Task 1")
+    todo_service.create_todo("Task 2")
+    todos = todo_service.get_all_todos()
+    assert len(todos) == 2
+    assert todos[0].title == "Task 1"
+    assert todos[1].title == "Task 2"
+
+def test_get_todo_by_id(todo_service: TodoService):
+    """Test retrieving a todo by its ID."""
+    todo1 = todo_service.create_todo("Task A")
+    todo2 = todo_service.create_todo("Task B")
+
+    found_todo = todo_service.get_todo_by_id(todo1.id)
+    assert found_todo == todo1
+
+    not_found_todo = todo_service.get_todo_by_id(999)
+    assert not_found_todo is None
+
+def test_update_todo(todo_service: TodoService):
+    """Test updating an existing todo."""
+    todo = todo_service.create_todo("Old Title", "Old Description")
+    
+    # Update title and description
+    updated_todo = todo_service.update_todo(todo.id, "New Title", "New Description", True)
+    assert updated_todo is not None
+    assert updated_todo.title == "New Title"
+    assert updated_todo.description == "New Description"
     assert updated_todo.completed
-    assert service.complete_todo(999) is None
 
-def test_uncomplete_todo():
-    """
-    Tests that a todo can be marked as incomplete.
-    """
-    service = TodoService()
-    todo = service.add_todo(title="Test Todo")
-    updated_todo = service.complete_todo(todo.id)
-    assert updated_todo.completed
-    updated_todo = service.uncomplete_todo(todo.id)
-    assert not updated_todo.completed
-    assert service.uncomplete_todo(999) is None
+    # Update only title
+    updated_todo_title = todo_service.update_todo(todo.id, title="Only Title Change")
+    assert updated_todo_title is not None
+    assert updated_todo_title.title == "Only Title Change"
+    assert updated_todo_title.description == "New Description" # Should remain unchanged
+    assert updated_todo_title.completed # Should remain unchanged
 
-def test_update_todo():
-    """
-    Tests that a todo can be updated.
-    """
-    service = TodoService()
-    todo = service.add_todo(title="Test Todo", description="Test description")
-    updated_todo = service.update_todo(todo.id, title="Updated Title", description="Updated description")
-    assert updated_todo.title == "Updated Title"
-    assert updated_todo.description == "Updated description"
-    assert service.update_todo(999, title="Not found") is None
+    # Update only description
+    updated_todo_desc = todo_service.update_todo(todo.id, description="Only Desc Change")
+    assert updated_todo_desc is not None
+    assert updated_todo_desc.title == "Only Title Change" # Should remain unchanged
+    assert updated_todo_desc.description == "Only Desc Change"
+    assert updated_todo_desc.completed # Should remain unchanged
 
-def test_delete_todo():
-    """
-    Tests that a todo can be deleted.
-    """
-    service = TodoService()
-    todo = service.add_todo(title="Test Todo")
-    assert len(service.list_todos()) == 1
-    deleted = service.delete_todo(todo.id)
-    assert deleted
-    assert len(service.list_todos()) == 0
-    assert not service.delete_todo(999)
+    # Update only completed status
+    updated_todo_completed = todo_service.update_todo(todo.id, completed=False)
+    assert updated_todo_completed is not None
+    assert updated_todo_completed.title == "Only Title Change"
+    assert updated_todo_completed.description == "Only Desc Change"
+    assert not updated_todo_completed.completed
+
+    # Try to update a non-existent todo
+    non_existent_update = todo_service.update_todo(999, "Non Existent")
+    assert non_existent_update is None
+
+    # Test updating with empty title
+    with pytest.raises(ValueError, match="Title cannot be empty."):
+        todo_service.update_todo(todo.id, "")
+
+def test_delete_todo(todo_service: TodoService):
+    """Test deleting a todo."""
+    todo1 = todo_service.create_todo("Task 1")
+    todo2 = todo_service.create_todo("Task 2")
+
+    # Delete an existing todo
+    assert todo_service.delete_todo(todo1.id)
+    assert len(todo_service.get_all_todos()) == 1
+    assert todo_service.get_todo_by_id(todo1.id) is None
+
+    # Try to delete a non-existent todo
+    assert not todo_service.delete_todo(999)
+    assert len(todo_service.get_all_todos()) == 1

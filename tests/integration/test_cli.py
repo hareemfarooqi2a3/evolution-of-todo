@@ -97,23 +97,73 @@ def test_update_command():
     assert "Todo with ID 999 not found." in output
 
 def test_delete_command():
+
     """
+
     Tests the 'delete' command of the CLI.
+
     """
+
     service = TodoService()
-    f = io.StringIO()
-    with redirect_stdout(f):
-        main(["add", "--title", "Test Todo"], todo_service=service)
-        main(["delete", "--id", "1"], todo_service=service)
-        main(["list"], todo_service=service)
-    
-    output = f.getvalue()
-    assert "Todo 1 deleted." in output
-    assert "No todos yet." in output
 
     f = io.StringIO()
+
     with redirect_stdout(f):
-        main(["delete", "--id", "999"], todo_service=service)
+
+        main(["add", "--title", "Test Todo"], todo_service=service)
+
+        main(["delete", "--id", "1"], todo_service=service)
+
+        main(["list"], todo_service=service)
+
     
+
     output = f.getvalue()
+
+    assert "Todo 1 deleted." in output
+
+    assert "No todos yet." in output
+
+
+
+    f = io.StringIO()
+
+    with redirect_stdout(f):
+
+        main(["delete", "--id", "999"], todo_service=service)
+
+    
+
+    output = f.getvalue()
+
     assert "Todo with ID 999 not found." in output
+
+
+
+def test_add_command_long_title():
+
+    """
+
+    Tests the 'add' command with a very long title.
+
+    """
+
+    service = TodoService()
+
+    f = io.StringIO()
+
+    long_title = "a" * 1000
+
+    with redirect_stdout(f):
+
+        main(["add", "--title", long_title], todo_service=service)
+
+        main(["list"], todo_service=service)
+
+    
+
+    output = f.getvalue()
+
+    assert f"Created todo with ID: 1 and Title: '{long_title}'" in output
+
+    assert f"[ ] 1: {long_title}" in output

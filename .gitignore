@@ -39,3 +39,13 @@ dist/
 *.swp
 *.swo
 *~
+
+# Full-stack
+frontend/node_modules/
+frontend/.next/
+.env
+
+# Chatbot
+chatbot_frontend/node_modules/
+chatbot_backend/.venv/
+
