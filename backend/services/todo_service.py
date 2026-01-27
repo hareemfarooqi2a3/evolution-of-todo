@@ -1,10 +1,29 @@
 from typing import List, Optional
 from sqlmodel import Session, select
-from ..models import Todo, TodoCreate, TodoUpdate
+from dapr.clients import DaprClient
+import json
+from ..models import Todo, TodoCreate, TodoUpdate, TodoCreatedEvent, TodoUpdatedEvent, TodoDeletedEvent
+from datetime import datetime
 
 class TodoService:
-    def __init__(self, session: Session):
+    def __init__(self, session: Session, dapr_client: DaprClient, pubsub_name: str, topic_name: str):
         self.session = session
+        self.dapr_client = dapr_client
+        self.pubsub_name = pubsub_name
+        self.topic_name = topic_name
+
+    def _publish_event(self, event: dict, key: str):
+        """Helper to publish an event to Dapr PubSub."""
+        try:
+            self.dapr_client.publish_event(
+                pubsub_name=self.pubsub_name,
+                topic_name=self.topic_name,
+                data=json.dumps(event),
+                data_content_type='application/json'
+            )
+            print(f"Message published to Dapr PubSub topic '{self.topic_name}' with key '{key}'")
+        except Exception as e:
+            print(f"Failed to publish message to Dapr PubSub: {e}")
 
     def get_all(self, user_id: int, search: Optional[str] = None, filter_by_status: Optional[str] = None, filter_by_priority: Optional[str] = None, sort_by: Optional[str] = None) -> List[Todo]:
         query = select(Todo).where(Todo.user_id == user_id)
@@ -37,6 +56,10 @@ class TodoService:
         self.session.add(todo)
         self.session.commit()
         self.session.refresh(todo)
+        
+        event = TodoCreatedEvent(todo_id=todo.id, user_id=todo.user_id, todo_data=todo).dict()
+        self._publish_event(event, key=f"todo_created_{todo.id}")
+        
         return todo
 
     def update(self, todo_id: int, todo_update: TodoUpdate, user_id: int) -> Optional[Todo]:
@@ -44,6 +67,8 @@ class TodoService:
         if not todo:
             return None
 
+        old_todo_data = todo.copy(deep=True) # Store a copy of the old data
+        
         update_data = todo_update.dict(exclude_unset=True)
         for key, value in update_data.items():
             setattr(todo, key, value)
@@ -51,12 +76,21 @@ class TodoService:
         self.session.add(todo)
         self.session.commit()
         self.session.refresh(todo)
+
+        event = TodoUpdatedEvent(todo_id=todo.id, user_id=todo.user_id, old_todo_data=old_todo_data, new_todo_data=todo).dict()
+        self._publish_event(event, key=f"todo_updated_{todo.id}")
+        
         return todo
 
-    def delete(self, todo_id: int) -> bool:
-        todo = self.get_by_id(todo_id)
+    def delete(self, todo_id: int, user_id: int) -> bool:
+        todo = self.get_by_id(todo_id, user_id)
         if todo:
-            self._todos.remove(todo)
+            self.session.delete(todo)
+            self.session.commit()
+            
+            event = TodoDeletedEvent(todo_id=todo.id, user_id=todo.user_id, todo_data=todo).dict()
+            self._publish_event(event, key=f"todo_deleted_{todo.id}")
+            
             return True
         return False
 

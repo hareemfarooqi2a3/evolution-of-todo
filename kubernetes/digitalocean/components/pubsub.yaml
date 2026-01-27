@@ -1,0 +1,36 @@
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: pubsub
+spec:
+  type: pubsub.kafka
+  version: v1
+  metadata:
+  - name: brokers
+    value: "kafka-service.default.svc.cluster.local:9092" # Assuming Kafka is deployed in the default namespace as 'kafka-service'
+  - name: consumerGroup
+    value: "reminders-service-group" # This can be overridden per consumer
+  - name: authRequired
+    value: "false"
+  # - name: saslUsername
+  #   value: "user"
+  # - name: saslPassword
+  #   secretKeyRef:
+  #     name: kafka-secrets
+  #     key: saslPassword
+  # - name: saslMechanism
+  #   value: "PLAIN"
+  # - name: securityProtocol
+  #   value: "SASL_SSL"
+  # - name: caCert
+  #   secretKeyRef:
+  #     name: kafka-secrets
+  #     key: caCert
+  # - name: clientCert
+  #   secretKeyRef:
+  #     name: kafka-secrets
+  #     key: clientCert
+  # - name: clientKey
+  #   secretKeyRef:
+  #     name: kafka-secrets
+  #     key: clientKey

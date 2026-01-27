@@ -1,0 +1,65 @@
+name: Deploy to DigitalOcean Kubernetes
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  REGISTRY: docker.io
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+  DO_K8S_CLUSTER_NAME: ${{ secrets.DO_K8S_CLUSTER_NAME }}
+  DO_API_TOKEN: ${{ secrets.DO_API_TOKEN }}
+  OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+  DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DO_API_TOKEN }}
+
+      - name: Save DigitalOcean kubeconfig
+        run: doctl kubernetes cluster kubeconfig save ${{ env.DO_K8S_CLUSTER_NAME }}
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ env.DOCKER_USERNAME }}
+          password: ${{ env.DOCKER_PASSWORD }}
+
+      - name: Build and push chatbot_backend image
+        run: |
+          docker build -t ${REGISTRY}/${DOCKER_USERNAME}/chatbot-backend:latest -f chatbot_backend/Dockerfile .
+          docker push ${REGISTRY}/${DOCKER_USERNAME}/chatbot-backend:latest
+
+      - name: Build and push chatbot_frontend image
+        run: |
+          docker build -t ${REGISTRY}/${DOCKER_USERNAME}/chatbot-frontend:latest -f chatbot_frontend/Dockerfile .
+          docker push ${REGISTRY}/${DOCKER_USERNAME}/chatbot-frontend:latest
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v3
+
+      - name: Deploy Dapr components
+        run: |
+          kubectl apply -f kubernetes/digitalocean/components/pubsub.yaml
+          kubectl apply -f kubernetes/digitalocean/components/state-store.yaml
+          
+      - name: Deploy with Helm
+        run: |
+          helm upgrade --install todo-dapr-release ./helm \
+            --set chatbot-backend.image.repository="${REGISTRY}/${DOCKER_USERNAME}/chatbot-backend" \
+            --set chatbot-backend.image.tag="latest" \
+            --set chatbot-frontend.image.repository="${REGISTRY}/${DOCKER_USERNAME}/chatbot-frontend" \
+            --set chatbot-frontend.image.tag="latest" \
+            --set chatbot-backend.env.OPENAI_API_KEY="${{ env.OPENAI_API_KEY }}" \
+            --set chatbot-backend.env.DATABASE_URL="${{ env.DATABASE_URL }}" \
+            --atomic --timeout 10m

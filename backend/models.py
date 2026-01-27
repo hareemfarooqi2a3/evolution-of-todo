@@ -56,3 +56,22 @@ class TodoUpdate(SQLModel):
     tags: Optional[List[str]] = None
     due_date: Optional[datetime] = None
     recurring_interval: Optional[str] = None
+
+# Kafka Event Models
+class TodoEventBase(SQLModel):
+    todo_id: int
+    user_id: int
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+
+class TodoCreatedEvent(TodoEventBase):
+    event_type: str = "TodoCreated"
+    todo_data: Todo
+
+class TodoUpdatedEvent(TodoEventBase):
+    event_type: str = "TodoUpdated"
+    old_todo_data: Todo
+    new_todo_data: Todo
+
+class TodoDeletedEvent(TodoEventBase):
+    event_type: str = "TodoDeleted"
+    todo_data: Todo

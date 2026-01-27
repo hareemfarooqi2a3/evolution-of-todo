@@ -87,3 +87,91 @@ This section details how to set up and run the AI Chatbot component of the Todo 
     *   `complete task 1` (replace 1 with an actual task ID)
     *   `update task 1 to buy milk and bread`
     *   `delete task 1`
+
+## Local Kubernetes Deployment (Minikube)
+
+This section details how to deploy the entire Todo application stack (backend and frontend) to a local Kubernetes cluster using Minikube and Helm.
+
+### Prerequisites
+
+*   **Minikube**: Ensure Minikube is installed and configured.
+*   **kubectl**: Kubernetes command-line tool.
+*   **Helm**: The Kubernetes package manager.
+*   **Docker**: Docker Desktop or an equivalent Docker environment.
+
+### Deployment Steps
+
+1.  **Start Minikube and configure Docker environment**:
+    Ensure Minikube is running and your shell is configured to use Minikube's Docker daemon.
+    ```bash
+    minikube start
+    eval $(minikube -p minikube docker-env)
+    ```
+
+2.  **Build and Load Docker Images**:
+    The `deploy-local.sh` script will automatically build the Docker images for both `chatbot_backend` and `chatbot_frontend` and load them into the Minikube Docker daemon.
+
+3.  **Deploy using Helm**:
+    Run the deployment script from the project root:
+    ```bash
+    ./scripts/deploy-local.sh
+    ```
+    This script will:
+    *   Check if Minikube is running, and start it if not.
+    *   Build Docker images for the backend and frontend.
+    *   Deploy the application using the master Helm chart located in the `helm/` directory.
+
+### Accessing the Deployed Application
+
+Once the deployment is complete, you can access the services using Minikube's service command:
+
+*   **Chatbot Frontend**:
+    ```bash
+    minikube service todo-release-chatbot-frontend
+    ```
+*   **Chatbot Backend**:
+    ```bash
+    minikube service todo-release-chatbot-backend
+    ```
+    (Note: The backend service might not be directly accessible via browser in all cases, but its internal endpoint will be used by the frontend.)
+
+You can also check the status of your Kubernetes pods:
+```bash
+kubectl get pods -l app.kubernetes.io/instance=todo-release
+```
+
+## Installing Dapr on Minikube
+
+This section outlines how to install Dapr, a portable, event-driven runtime for building microservices, onto your Minikube cluster.
+
+### Prerequisites
+
+*   **Minikube**: Running and configured.
+*   **kubectl**: Configured to interact with your Minikube cluster.
+*   **Dapr CLI**: Installed on your local machine. Follow the official Dapr documentation for installation: [https://docs.dapr.io/getting-started/install-dapr-cli/](https://docs.dapr.io/getting-started/install-dapr-cli/)
+
+### Installation Steps
+
+1.  **Initialize Dapr in your Minikube cluster**:
+    ```bash
+    dapr init -k
+    ```
+    This command will:
+    *   Install the Dapr control plane (sidecar injector, Sentry, Placement, Operator) into your Kubernetes cluster.
+    *   Install a Redis instance for state management (used by Dapr state store).
+    *   Install a Zipkin instance for tracing.
+
+2.  **Verify Dapr installation**:
+    Check if the Dapr control plane pods are running:
+    ```bash
+    kubectl get pods -n dapr-system
+    ```
+    You should see `dapr-dashboard`, `dapr-placement`, `dapr-operator`, and `dapr-sentry` pods in a `Running` state.
+
+3.  **Check Dapr status**:
+    ```bash
+    dapr status -k
+    ```
+    This should show the Dapr control plane services as healthy.
+
+
