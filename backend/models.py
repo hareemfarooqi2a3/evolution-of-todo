@@ -4,18 +4,18 @@ from sqlmodel import Field, SQLModel, JSON
 from sqlalchemy import Column
 
 
-class UserBase(SQLModel):
+class User(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
     username: str = Field(unique=True, index=True)
     hashed_password: str
 
-class User(UserBase, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
-
-class UserCreate(UserBase):
+class UserCreate(SQLModel):
+    username: str
     password: str
 
-class UserRead(UserBase):
+class UserRead(SQLModel):
     id: int
+    username: str
 
 class UserUpdate(SQLModel):
     username: Optional[str] = None

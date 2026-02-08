@@ -13,6 +13,8 @@ env:
   DO_API_TOKEN: ${{ secrets.DO_API_TOKEN }}
   OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
   DATABASE_URL: ${{ secrets.DATABASE_URL }}
+  BACKEND_IMAGE_NAME: ${{ secrets.BACKEND_IMAGE_NAME }}
+  BACKEND_IMAGE_TAG: ${{ secrets.BACKEND_IMAGE_TAG }}
 
 jobs:
   deploy:
@@ -39,6 +41,11 @@ jobs:
         run: |
           docker build -t ${REGISTRY}/${DOCKER_USERNAME}/chatbot-backend:latest -f chatbot_backend/Dockerfile .
           docker push ${REGISTRY}/${DOCKER_USERNAME}/chatbot-backend:latest
+
+      - name: Build and push backend image
+        run: |
+          docker build -t ${BACKEND_IMAGE_NAME}:${BACKEND_IMAGE_TAG} -f backend/Dockerfile .
+          docker push ${BACKEND_IMAGE_NAME}:${BACKEND_IMAGE_TAG}
 
       - name: Build and push chatbot_frontend image
         run: |

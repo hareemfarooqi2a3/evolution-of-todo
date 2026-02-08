@@ -3,6 +3,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const userInput = document.getElementById('user-input');
     const chatContainer = document.getElementById('chat-container');
 
+    // API URL - defaults to port 8000 for simple setup, change to 8001 if using run_local scripts
+    const API_BASE_URL = window.CHATBOT_API_URL || 'http://localhost:8000';
+
     sendBtn.addEventListener('click', async () => {
         const message = userInput.value;
         if (!message) return;
@@ -11,7 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
         userInput.value = '';
 
         try {
-            const response = await fetch('/api/test_user/chat', {
+            const response = await fetch(`${API_BASE_URL}/api/test_user/chat`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

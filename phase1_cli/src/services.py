@@ -1,11 +1,38 @@
 from typing import List, Optional
+import json
+import os
 from .models import Todo
 
+# File path for persistent storage
+DATA_FILE = os.path.join(os.path.dirname(__file__), '..', 'todos.json')
+
 class TodoService:
-    """Manages the collection of Todo items in memory."""
+    """Manages the collection of Todo items with file-based persistence."""
     def __init__(self):
         self._todos: List[Todo] = []
         self._next_id = 1
+        self._load_from_file()
+
+    def _load_from_file(self):
+        """Load todos from JSON file if it exists."""
+        if os.path.exists(DATA_FILE):
+            try:
+                with open(DATA_FILE, 'r') as f:
+                    data = json.load(f)
+                    self._todos = [Todo(**item) for item in data.get('todos', [])]
+                    self._next_id = data.get('next_id', 1)
+            except (json.JSONDecodeError, IOError):
+                self._todos = []
+                self._next_id = 1
+
+    def _save_to_file(self):
+        """Save todos to JSON file."""
+        data = {
+            'todos': [{'id': t.id, 'title': t.title, 'description': t.description, 'completed': t.completed} for t in self._todos],
+            'next_id': self._next_id
+        }
+        with open(DATA_FILE, 'w') as f:
+            json.dump(data, f, indent=2)
 
     def create_todo(self, title: str, description: Optional[str] = None) -> Todo:
         """Creates a new Todo item and adds it to the list."""
@@ -19,6 +46,7 @@ class TodoService:
         )
         self._todos.append(todo)
         self._next_id += 1
+        self._save_to_file()
         return todo
 
     def get_all_todos(self) -> List[Todo]:
@@ -54,7 +82,8 @@ class TodoService:
             
         if completed is not None:
             todo.completed = completed
-            
+
+        self._save_to_file()
         return todo
 
     def delete_todo(self, todo_id: int) -> bool:
@@ -64,4 +93,5 @@ class TodoService:
             return False
         
         self._todos.remove(todo)
+        self._save_to_file()
         return True

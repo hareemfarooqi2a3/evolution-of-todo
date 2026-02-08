@@ -1,25 +1,29 @@
 # chatbot_backend/mcp_server.py
 
-from chatbot_backend.tools.task_tools import add_task, list_tasks, complete_task, update_task, delete_task
+# Handle imports for both running from within directory and as a package
+try:
+    from chatbot_backend.tools.task_tools import add_task, list_tasks, complete_task, update_task, delete_task
+except ImportError:
+    from tools.task_tools import add_task, list_tasks, complete_task, update_task, delete_task
 
 def get_mcp_tools():
     """
     Returns a list of MCP tools for the agent in OpenAI Assistants API format.
+    Note: user_id is automatically injected from the API path, not from tool parameters.
     """
     return [
         {
             "type": "function",
             "function": {
                 "name": "add_task",
-                "description": "Create a new task for a user.",
+                "description": "Create a new task for the current user.",
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "user_id": {"type": "string", "description": "The ID of the user."},
                         "title": {"type": "string", "description": "The title of the task."},
-                        "description": {"type": "string", "description": "The description of the task."}
+                        "description": {"type": "string", "description": "The description of the task (optional)."}
                     },
-                    "required": ["user_id", "title"]
+                    "required": ["title"]
                 }
             }
         },
@@ -27,14 +31,13 @@ def get_mcp_tools():
             "type": "function",
             "function": {
                 "name": "list_tasks",
-                "description": "Retrieve tasks for a user, optionally filtering by status.",
+                "description": "Retrieve all tasks for the current user, optionally filtering by status.",
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "user_id": {"type": "string", "description": "The ID of the user."},
                         "status": {"type": "string", "enum": ["all", "pending", "completed"], "description": "Filter tasks by status ('all', 'pending', 'completed'). Default is 'all'."}
                     },
-                    "required": ["user_id"]
+                    "required": []
                 }
             }
         },
@@ -46,10 +49,9 @@ def get_mcp_tools():
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "user_id": {"type": "string", "description": "The ID of the user."},
                         "task_id": {"type": "integer", "description": "The ID of the task to complete."}
                     },
-                    "required": ["user_id", "task_id"]
+                    "required": ["task_id"]
                 }
             }
         },
@@ -61,12 +63,11 @@ def get_mcp_tools():
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "user_id": {"type": "string", "description": "The ID of the user."},
                         "task_id": {"type": "integer", "description": "The ID of the task to update."},
-                        "title": {"type": "string", "description": "The new title of the task."},
-                        "description": {"type": "string", "description": "The new description of the task."}
+                        "title": {"type": "string", "description": "The new title of the task (optional)."},
+                        "description": {"type": "string", "description": "The new description of the task (optional)."}
                     },
-                    "required": ["user_id", "task_id"]
+                    "required": ["task_id"]
                 }
             }
         },
@@ -78,10 +79,9 @@ def get_mcp_tools():
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "user_id": {"type": "string", "description": "The ID of the user."},
                         "task_id": {"type": "integer", "description": "The ID of the task to delete."}
                     },
-                    "required": ["user_id", "task_id"]
+                    "required": ["task_id"]
                 }
             }
         }

@@ -1,0 +1,22 @@
+# Default dotfiles
+.DS_Store
+.git/
+.gitignore
+.helmignore
+# Common vendor directory
+vendor/
+# Common build directory
+build/
+# Dockerfile and build artifacts
+Dockerfile*
+.dockerignore
+# IDE and editor specific files
+.vscode/
+.idea/
+# Test files
+*_test.go
+# Charts specific files
+charts/
+# Temporary files
+*.tmp
+*.log

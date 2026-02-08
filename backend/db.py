@@ -1,12 +1,24 @@
 import os
-from sqlmodel import create_engine, Session
+from sqlmodel import create_engine, Session, SQLModel
 
-DATABASE_URL = os.environ.get("DATABASE_URL")
+# Use SQLite as default for local development
+DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite:///./todo.db")
 
-if not DATABASE_URL:
-    raise ValueError("DATABASE_URL environment variable is not set")
+# Handle SQLite connection args
+connect_args = {}
+if DATABASE_URL.startswith("sqlite"):
+    connect_args = {"check_same_thread": False}
 
-engine = create_engine(DATABASE_URL)
+engine = create_engine(DATABASE_URL, connect_args=connect_args)
+
+def init_db():
+    """Initialize database tables"""
+    # Import models to register them with SQLModel metadata
+    try:
+        from .models import User, Todo
+    except ImportError:
+        from models import User, Todo
+    SQLModel.metadata.create_all(engine)
 
 def get_db_session():
     with Session(engine) as session:

@@ -1,17 +1,39 @@
 from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from chatbot_backend.agent import get_agent, client
-from chatbot_backend.database import engine
-from chatbot_backend.models import Conversation, Message
 from sqlmodel import Session, select
 import datetime
 import json
 import time
-from openai.types.beta.threads.runs import ToolCall
-from chatbot_backend.tools.task_tools import add_task, list_tasks, complete_task, update_task, delete_task
 
-app = FastAPI()
+# Handle imports for both running from within directory and as a package
+try:
+    from chatbot_backend.agent import get_agent, client
+    from chatbot_backend.database import engine, init_db
+    from chatbot_backend.models import Conversation, Message
+    from chatbot_backend.tools.task_tools import add_task, list_tasks, complete_task, update_task, delete_task
+except ImportError:
+    from agent import get_agent, client
+    from database import engine, init_db
+    from models import Conversation, Message
+    from tools.task_tools import add_task, list_tasks, complete_task, update_task, delete_task
+
+app = FastAPI(title="AI Todo Chatbot API", description="OpenAI Assistants-powered Todo Chatbot")
+
+@app.on_event("startup")
+def on_startup():
+    init_db()
+    print("[INFO] Chatbot database initialized")
+
+# CORS Middleware - Allow frontend to connect
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.exception_handler(Exception)
 async def general_exception_handler(request: Request, exc: Exception):
@@ -26,17 +48,16 @@ class ChatRequest(BaseModel):
 
 @app.post("/api/{user_id}/chat")
 async def chat(user_id: str, request: ChatRequest, agent_parts = Depends(get_agent)):
-    client_openai, assistant = agent_parts # Renamed client to client_openai to avoid conflict with local 'client' variable
-    
+    client_openai, assistant = agent_parts
+
     with Session(engine) as session:
         # Step 1: Find or create conversation and thread
         if request.conversation_id:
             conversation = session.get(Conversation, request.conversation_id)
             if not conversation or conversation.user_id != user_id:
                 return {"error": "Conversation not found or access denied"}
-            
+
             if not conversation.thread_id:
-                # If conversation exists but no thread_id, create one
                 thread = client_openai.beta.threads.create()
                 conversation.thread_id = thread.id
                 session.add(conversation)
@@ -45,7 +66,6 @@ async def chat(user_id: str, request: ChatRequest, agent_parts = Depends(get_age
             else:
                 thread = client_openai.beta.threads.retrieve(conversation.thread_id)
         else:
-            # New conversation, create new thread
             thread = client_openai.beta.threads.create()
             conversation = Conversation(
                 user_id=user_id,
@@ -63,7 +83,7 @@ async def chat(user_id: str, request: ChatRequest, agent_parts = Depends(get_age
             role="user",
             content=request.message,
         )
-        
+
         # Store user message in DB
         user_message_db = Message(
             conversation_id=conversation.id,
@@ -86,20 +106,17 @@ async def chat(user_id: str, request: ChatRequest, agent_parts = Depends(get_age
         while run.status in ['queued', 'in_progress', 'cancelling', 'requires_action']:
             time.sleep(0.5)
             run = client_openai.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id)
-            
+
             if run.status == 'requires_action':
                 for tool_call in run.required_action.submit_tool_outputs.tool_calls:
                     function_name = tool_call.function.name
                     function_args = json.loads(tool_call.function.arguments)
-                    
-                    # Dynamically call the tool function
-                    # Ensure user_id is passed if tool expects it
-                    if 'user_id' in function_args:
-                        function_args['user_id'] = user_id
+
+                    # Always add user_id to function args (all tools require it)
+                    function_args['user_id'] = user_id
 
                     tool_response = ""
                     try:
-                        # Map tool names to actual functions
                         if function_name == "add_task":
                             tool_response = add_task(**function_args)
                         elif function_name == "list_tasks":
@@ -112,7 +129,7 @@ async def chat(user_id: str, request: ChatRequest, agent_parts = Depends(get_age
                             tool_response = delete_task(**function_args)
                         else:
                             tool_response = {"error": f"Unknown tool: {function_name}"}
-                            
+
                         tool_outputs.append({
                             "tool_call_id": tool_call.id,
                             "output": json.dumps(tool_response)
@@ -122,14 +139,13 @@ async def chat(user_id: str, request: ChatRequest, agent_parts = Depends(get_age
                             "tool_call_id": tool_call.id,
                             "output": json.dumps({"error": str(e)})
                         })
-                
-                # Submit tool outputs
+
                 client_openai.beta.threads.runs.submit_tool_outputs(
                     thread_id=thread.id,
                     run_id=run.id,
                     tool_outputs=tool_outputs
                 )
-                tool_outputs = [] # Clear outputs after submission
+                tool_outputs = []
 
         # Step 5: Retrieve the assistant's response
         messages = client_openai.beta.threads.messages.list(thread_id=thread.id, order="desc", limit=1)
@@ -142,7 +158,7 @@ async def chat(user_id: str, request: ChatRequest, agent_parts = Depends(get_age
                         break
                 if assistant_response_content != "No response from assistant.":
                     break
-        
+
         # Store assistant message in DB
         assistant_message_db = Message(
             conversation_id=conversation.id,
@@ -152,10 +168,10 @@ async def chat(user_id: str, request: ChatRequest, agent_parts = Depends(get_age
             created_at=str(datetime.datetime.utcnow())
         )
         session.add(assistant_message_db)
-        
+
         conversation.updated_at = str(datetime.datetime.utcnow())
         session.add(conversation)
-        
+
         session.commit()
 
         return {

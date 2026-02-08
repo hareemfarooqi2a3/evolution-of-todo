@@ -3,8 +3,13 @@
 import os
 import json
 from openai import OpenAI
-from chatbot_backend.mcp_server import get_mcp_tools
 from dotenv import load_dotenv
+
+# Handle imports for both running from within directory and as a package
+try:
+    from chatbot_backend.mcp_server import get_mcp_tools
+except ImportError:
+    from mcp_server import get_mcp_tools
 
 load_dotenv()
 

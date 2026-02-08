@@ -11,6 +11,16 @@ interface EditTodoFormProps {
     onClose: () => void;
 }
 
+// Priority color indicator
+const getPriorityIndicator = (p: string) => {
+    const colors: Record<string, string> = {
+        High: "bg-red-500",
+        Medium: "bg-yellow-500",
+        Low: "bg-green-500",
+    };
+    return colors[p] || colors.Medium;
+};
+
 export default function EditTodoForm({ todo, onUpdate, onClose }: EditTodoFormProps) {
     const [title, setTitle] = useState(todo.title);
     const [description, setDescription] = useState(todo.description || "");
@@ -29,61 +39,113 @@ export default function EditTodoForm({ todo, onUpdate, onClose }: EditTodoFormPr
 
     return (
         <form onSubmit={handleSubmit}>
-            <div className="mb-2">
+            <h2 className="text-xl font-bold text-gray-800 mb-4">Edit Todo</h2>
+
+            {/* Title */}
+            <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
                 <input
                     type="text"
-                    placeholder="Title"
+                    placeholder="What needs to be done?"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    className="w-full p-2 border rounded"
+                    className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    required
                 />
             </div>
-            <div className="mb-2">
+
+            {/* Description */}
+            <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
                 <textarea
-                    placeholder="Description"
+                    placeholder="Add more details..."
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    className="w-full p-2 border rounded"
+                    className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    rows={3}
                 ></textarea>
             </div>
-            <div className="mb-2">
-                <select value={priority} onChange={(e) => setPriority(e.target.value)} className="w-full p-2 border rounded">
-                    <option value="High">High</option>
-                    <option value="Medium">Medium</option>
-                    <option value="Low">Low</option>
-                </select>
+
+            {/* Priority */}
+            <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                <div className="relative">
+                    <span className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-3 h-3 rounded-full ${getPriorityIndicator(priority)}`}></span>
+                    <select
+                        value={priority}
+                        onChange={(e) => setPriority(e.target.value)}
+                        className="w-full p-3 pl-8 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white"
+                    >
+                        <option value="High">High Priority</option>
+                        <option value="Medium">Medium Priority</option>
+                        <option value="Low">Low Priority</option>
+                    </select>
+                </div>
             </div>
-            <div className="mb-2">
+
+            {/* Tags */}
+            <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Tags</label>
                 <input
                     type="text"
-                    placeholder="Tags (comma-separated)"
+                    placeholder="work, personal, urgent (comma-separated)"
                     value={tags}
                     onChange={(e) => setTags(e.target.value)}
-                    className="w-full p-2 border rounded"
+                    className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 />
+                {tags && (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                        {tags.split(",").map(tag => tag.trim()).filter(tag => tag).map((tag, index) => (
+                            <span key={index} className="text-xs bg-indigo-100 text-indigo-700 rounded-full px-2 py-0.5">
+                                #{tag}
+                            </span>
+                        ))}
+                    </div>
+                )}
             </div>
-            <div className="mb-2">
+
+            {/* Due Date */}
+            <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
                 <DatePicker
                     selected={dueDate}
                     onChange={(date) => setDueDate(date)}
-                    placeholderText="Due Date"
-                    className="w-full p-2 border rounded"
+                    placeholderText="Select due date"
+                    className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    dateFormat="MMMM d, yyyy"
+                    isClearable
                 />
             </div>
-            <div className="mb-2">
-                <select value={recurringInterval} onChange={(e) => setRecurringInterval(e.target.value)} className="w-full p-2 border rounded">
-                    <option value="">Not Recurring</option>
+
+            {/* Recurring Interval */}
+            <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Repeat</label>
+                <select
+                    value={recurringInterval}
+                    onChange={(e) => setRecurringInterval(e.target.value)}
+                    className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                >
+                    <option value="">Does not repeat</option>
                     <option value="daily">Daily</option>
                     <option value="weekly">Weekly</option>
                     <option value="monthly">Monthly</option>
                 </select>
             </div>
-            <div className="flex justify-end">
-                <button type="button" onClick={onClose} className="px-4 py-2 mr-2 bg-gray-300 text-black rounded">
+
+            {/* Action Buttons */}
+            <div className="flex justify-end gap-2 mt-6">
+                <button
+                    type="button"
+                    onClick={onClose}
+                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+                >
                     Cancel
                 </button>
-                <button type="submit" className="px-4 py-2 bg-blue-500 text-white rounded">
-                    Update
+                <button
+                    type="submit"
+                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium"
+                >
+                    Update Todo
                 </button>
             </div>
         </form>

@@ -1,3 +1,6 @@
+# Helm values for Evolution of Todo Application
+# Includes chatbot backend, frontend, and event-driven services
+
 chatbot-backend:
   replicaCount: 1
   image:
@@ -7,8 +10,9 @@ chatbot-backend:
     type: ClusterIP
     port: 8000
   env:
-    OPENAI_API_KEY: "" # This should be set via environment variables or Kubernetes secrets in a real deployment
-    DATABASE_URL: "postgresql://user:password@postgresql-service:5432/database" # Replace with actual DB URL or use another subchart for postgres
+    OPENAI_API_KEY: ""  # Set via --set or secrets
+    DATABASE_URL: ""     # Set via --set or secrets
+    BETTER_AUTH_SECRET: ""  # Shared with frontend for JWT verification
 
 chatbot-frontend:
   replicaCount: 1
@@ -16,5 +20,75 @@ chatbot-frontend:
     repository: chatbot-frontend
     tag: "1.0.0"
   service:
-    type: ClusterIP
+    type: LoadBalancer
     port: 3000
+  env:
+    NEXT_PUBLIC_API_URL: "http://chatbot-backend:8000"
+
+# Backend API service (Phase II)
+backend:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: backend
+    tag: "1.0.0"
+  service:
+    type: ClusterIP
+    port: 8000
+  env:
+    DATABASE_URL: ""
+    BETTER_AUTH_SECRET: ""
+    DAPR_PUBSUB_NAME: "pubsub"
+    DAPR_TODO_EVENTS_TOPIC: "todo-events"
+  # Dapr annotations
+  dapr:
+    enabled: true
+    appId: "backend"
+    appPort: 8000
+
+# Frontend web app (Phase II)
+frontend:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: frontend
+    tag: "1.0.0"
+  service:
+    type: LoadBalancer
+    port: 3000
+  env:
+    NEXT_PUBLIC_API_URL: "http://backend:8000"
+    BETTER_AUTH_SECRET: ""
+    DATABASE_URL: ""
+
+# Reminders service (Phase V)
+reminders-service:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: reminders-service
+    tag: "1.0.0"
+  env:
+    KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+    KAFKA_TOPIC: "todo-events"
+    NOTIFICATION_METHOD: "console"
+    # Optional email config
+    SMTP_HOST: ""
+    SMTP_PORT: "587"
+    SMTP_USER: ""
+    SMTP_PASSWORD: ""
+    SMTP_FROM: ""
+    # Optional webhook config
+    WEBHOOK_URL: ""
+
+# Recurring tasks service (Phase V)
+recurring-tasks-service:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: recurring-tasks-service
+    tag: "1.0.0"
+  env:
+    KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+    KAFKA_TOPIC: "todo-events"
+    DATABASE_URL: ""

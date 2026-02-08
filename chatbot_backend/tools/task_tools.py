@@ -1,7 +1,17 @@
 from sqlmodel import Session, select
-from chatbot_backend.database import engine
-from chatbot_backend.models import Task
 import datetime
+import sys
+import os
+
+# Handle imports for both running from within directory and as a package
+try:
+    from chatbot_backend.database import engine
+    from chatbot_backend.models import Task
+except ImportError:
+    # Add parent directory to path for local development
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    from database import engine
+    from models import Task
 
 def add_task(user_id: str, title: str, description: str = None):
     """
@@ -32,7 +42,7 @@ def list_tasks(user_id: str, status: str = "all"):
             statement = statement.where(Task.completed == True)
         
         tasks = session.exec(statement).all()
-        return [task.dict() for task in tasks]
+        return [task.model_dump() for task in tasks]
 
 def complete_task(user_id: str, task_id: int):
     """
