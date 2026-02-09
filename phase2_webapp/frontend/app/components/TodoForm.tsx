@@ -118,7 +118,7 @@ export default function TodoForm({ onAdd }: TodoFormProps) {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
                     <DatePicker
                         selected={dueDate}
-                        onChange={(date) => setDueDate(date)}
+                        onChange={(date: Date | null) => setDueDate(date)}
                         placeholderText="Select due date"
                         className="w-full p-3 border rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                         dateFormat="MMMM d, yyyy"
