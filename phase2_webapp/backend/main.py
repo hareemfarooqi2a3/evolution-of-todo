@@ -73,16 +73,21 @@ TODO_EVENTS_TOPIC = os.getenv("DAPR_TODO_EVENTS_TOPIC", "todo-events")
 # --- Authentication Endpoints ---
 @app.post("/register", response_model=User)
 def register_user(user_create: UserCreate, session: Session = Depends(get_db_session)):
-    user_exists = session.exec(select(User).where(User.username == user_create.username)).first()
-    if user_exists:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Username already registered")
+    try:
+        user_exists = session.exec(select(User).where(User.username == user_create.username)).first()
+        if user_exists:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Username already registered")
 
-    hashed_password = get_password_hash(user_create.password)
-    user = User(username=user_create.username, hashed_password=hashed_password)
-    session.add(user)
-    session.commit()
-    session.refresh(user)
-    return user
+        hashed_password = get_password_hash(user_create.password)
+        user = User(username=user_create.username, hashed_password=hashed_password)
+        session.add(user)
+        session.commit()
+        session.refresh(user)
+        return user
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Registration error: {type(e).__name__}: {str(e)}")
 
 
 @app.post("/login", response_model=Token)
