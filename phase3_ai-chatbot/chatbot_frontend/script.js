@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const chatContainer = document.getElementById('chat-container');
 
     // API URL - defaults to port 8000 for simple setup, change to 8001 if using run_local scripts
-    const API_BASE_URL = window.CHATBOT_API_URL || 'http://localhost:8000';
+    const API_BASE_URL = window.CHATBOT_API_URL || 'https://evolution-of-todo-1.onrender.com';
 
     sendBtn.addEventListener('click', async () => {
         const message = userInput.value;
