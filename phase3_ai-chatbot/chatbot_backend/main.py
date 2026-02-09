@@ -103,9 +103,16 @@ async def chat(user_id: str, request: ChatRequest, agent_parts = Depends(get_age
 
         # Step 4: Poll for run status and handle tool calls
         tool_outputs = []
+        max_polls = 120  # 60 seconds max wait
+        poll_count = 0
         while run.status in ['queued', 'in_progress', 'cancelling', 'requires_action']:
+            poll_count += 1
+            if poll_count > max_polls:
+                print(f"[ERROR] Run timed out after {max_polls * 0.5}s. Status: {run.status}")
+                break
             time.sleep(0.5)
             run = client_openai.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id)
+            print(f"[DEBUG] Run status: {run.status}")
 
             if run.status == 'requires_action':
                 for tool_call in run.required_action.submit_tool_outputs.tool_calls:
@@ -146,6 +153,24 @@ async def chat(user_id: str, request: ChatRequest, agent_parts = Depends(get_age
                     tool_outputs=tool_outputs
                 )
                 tool_outputs = []
+
+        # Check if run failed
+        if run.status == 'failed':
+            error_msg = run.last_error.message if run.last_error else "Unknown error"
+            error_code = run.last_error.code if run.last_error else "unknown"
+            print(f"[ERROR] Run failed: {error_code} - {error_msg}")
+            return {
+                "conversation_id": conversation.id,
+                "response": f"Assistant error: {error_msg}",
+                "thread_id": thread.id
+            }
+        elif run.status == 'expired':
+            print(f"[ERROR] Run expired")
+            return {
+                "conversation_id": conversation.id,
+                "response": "The assistant took too long to respond. Please try again.",
+                "thread_id": thread.id
+            }
 
         # Step 5: Retrieve the assistant's response
         messages = client_openai.beta.threads.messages.list(thread_id=thread.id, order="desc", limit=1)

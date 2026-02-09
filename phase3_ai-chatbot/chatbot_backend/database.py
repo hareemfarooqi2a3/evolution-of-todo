@@ -12,7 +12,18 @@ connect_args = {}
 if DATABASE_URL.startswith("sqlite"):
     connect_args = {"check_same_thread": False}
 
-engine = create_engine(DATABASE_URL, connect_args=connect_args)
+engine_kwargs = {}
+if not DATABASE_URL.startswith("sqlite"):
+    # For PostgreSQL (Neon serverless): recycle stale connections and enable pre-ping
+    # to handle dropped SSL connections after idle periods
+    engine_kwargs = {
+        "pool_recycle": 300,
+        "pool_pre_ping": True,
+        "pool_size": 5,
+        "max_overflow": 10,
+    }
+
+engine = create_engine(DATABASE_URL, connect_args=connect_args, **engine_kwargs)
 
 def init_db():
     """Initialize database tables"""
