@@ -45,12 +45,24 @@ def create_or_retrieve_assistant():
     # Get the tools in the format expected by the Assistants API
     tools = get_mcp_tools()
     
+    desired_model = "gpt-4o-mini"
+
     # Check if an assistant with the desired name already exists
     # This avoids creating multiple assistants during development
     existing_assistants = client.beta.assistants.list(limit=100)
     for existing_assistant in existing_assistants.data:
         if existing_assistant.name == "Todo List Assistant":
-            print(f"Found existing assistant: {existing_assistant.id}")
+            # Update the existing assistant if model or tools have changed
+            if existing_assistant.model != desired_model:
+                print(f"Updating assistant {existing_assistant.id} model: {existing_assistant.model} -> {desired_model}")
+                existing_assistant = client.beta.assistants.update(
+                    existing_assistant.id,
+                    model=desired_model,
+                    instructions=assistant_instructions,
+                    tools=tools,
+                )
+            else:
+                print(f"Found existing assistant: {existing_assistant.id}")
             assistant_id = existing_assistant.id
             return existing_assistant
             
