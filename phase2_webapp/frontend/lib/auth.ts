@@ -2,7 +2,7 @@
 // This module provides JWT-based authentication that works with the FastAPI backend
 // The backend handles user management and issues JWT tokens
 
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+export const API_URL = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000").replace(/\/+$/, '');
 
 export interface AuthUser {
   id: number;
