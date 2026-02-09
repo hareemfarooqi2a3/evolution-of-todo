@@ -58,7 +58,7 @@ def create_or_retrieve_assistant():
     assistant = client.beta.assistants.create(
         name="Todo List Assistant",
         instructions=assistant_instructions,
-        model="gpt-4o", # Using a capable model
+        model="gpt-4o-mini", # Using a cheaper model to reduce costs
         tools=tools,
     )
     assistant_id = assistant.id
