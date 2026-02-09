@@ -12,7 +12,10 @@
       "WebFetch(domain:evolution-of-todo-6xff.onrender.com)",
       "WebFetch(domain:evolution-of-todo-1.onrender.com)",
       "Bash(curl:*)",
-      "WebFetch(domain:evolution-of-todo-lovat.vercel.app)"
+      "WebFetch(domain:evolution-of-todo-lovat.vercel.app)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfix\\(backend\\): pin bcrypt==4.0.1 for passlib compatibility\n\npasslib 1.7.4 is incompatible with bcrypt >= 4.1 causing 500 errors\non register/login endpoints when hashing passwords.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git push:*)"
     ]
   }
 }
