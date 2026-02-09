@@ -48,7 +48,13 @@ frontend/.next/
 # Chatbot
 chatbot_frontend/node_modules/
 chatbot_backend/.venv/
+chatbot_backend/.env
 
 # Phase I CLI data
 phase1_cli/todos.json
+
+# Database files
+*.db
+todo.db
+chatbot.db
 
