@@ -4,6 +4,10 @@ from sqlmodel import create_engine, Session, SQLModel
 # Use SQLite as default for local development
 DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite:///./todo.db")
 
+# Fix for Render/Heroku: they use postgres:// but SQLAlchemy requires postgresql://
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
 # Handle SQLite connection args
 connect_args = {}
 if DATABASE_URL.startswith("sqlite"):

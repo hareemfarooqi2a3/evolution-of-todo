@@ -5,11 +5,11 @@ FROM python:3.11-slim-bullseye
 WORKDIR /app
 
 # Copy the requirements file and install dependencies
-COPY chatbot_backend/requirements.txt .
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the entire chatbot_backend application code
-COPY chatbot_backend/ .
+# Copy the entire application code
+COPY . .
 
 # Expose the port FastAPI runs on
 EXPOSE 8000
