@@ -8,7 +8,8 @@
       "Bash(ls -la \"C:\\\\Users\\\\haree\\\\Downloads\\\\evolution-of-todo\\\\phase3_ai-chatbot\"\" && echo \"---\" && ls -la \"C:UsershareeDownloadsevolution-of-todophase4\"\")",
       "Bash(git rev-list:*)",
       "Bash(git cat-file:*)",
-      "Bash(sort:*)"
+      "Bash(sort:*)",
+      "WebFetch(domain:evolution-of-todo-6xff.onrender.com)"
     ]
   }
 }
