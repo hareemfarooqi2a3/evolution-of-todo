@@ -10,7 +10,9 @@
       "Bash(git cat-file:*)",
       "Bash(sort:*)",
       "WebFetch(domain:evolution-of-todo-6xff.onrender.com)",
-      "WebFetch(domain:evolution-of-todo-1.onrender.com)"
+      "WebFetch(domain:evolution-of-todo-1.onrender.com)",
+      "Bash(curl:*)",
+      "WebFetch(domain:evolution-of-todo-lovat.vercel.app)"
     ]
   }
 }
