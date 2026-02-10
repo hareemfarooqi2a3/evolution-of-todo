@@ -1,0 +1,9 @@
+dependencies:
+- name: chatbot-backend
+  repository: file://./chatbot-backend
+  version: 0.1.0
+- name: chatbot-frontend
+  repository: file://./chatbot-frontend
+  version: 0.1.0
+digest: sha256:c28986218e5a85a14e68a265657308c773f2ac1061d8942354dae4a8a20a1b60
+generated: "2026-02-10T05:32:04.79559+05:00"
