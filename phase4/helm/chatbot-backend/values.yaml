@@ -8,7 +8,7 @@ podSecurityContext: {}
 securityContext: {}
 
 serviceAccount:
-  create: true
+  create: false
   name: ""
 
 imagePullSecrets: []
@@ -59,4 +59,4 @@ affinity: {}
 
 env:
   OPENAI_API_KEY: ""
-  DATABASE_URL: "postgresql://user:password@postgresql-service:5432/database"
+  DATABASE_URL: ""

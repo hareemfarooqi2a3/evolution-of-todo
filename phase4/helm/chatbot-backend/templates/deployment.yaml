@@ -46,10 +46,14 @@ spec:
               path: /
               port: http
           env:
+            {{- if .Values.env.OPENAI_API_KEY }}
             - name: OPENAI_API_KEY
               value: {{ .Values.env.OPENAI_API_KEY | quote }}
+            {{- end }}
+            {{- if .Values.env.DATABASE_URL }}
             - name: DATABASE_URL
               value: {{ .Values.env.DATABASE_URL | quote }}
+            {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}
