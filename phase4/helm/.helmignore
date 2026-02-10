@@ -16,7 +16,7 @@ Dockerfile*
 # Test files
 *_test.go
 # Charts specific files
-charts/
+# charts/
 # Temporary files
 *.tmp
 *.log
