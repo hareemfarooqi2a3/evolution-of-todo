@@ -1,5 +1,18 @@
 replicaCount: 1
 
+autoscaling:
+  enabled: false
+
+podAnnotations: {}
+podSecurityContext: {}
+securityContext: {}
+
+serviceAccount:
+  create: true
+  name: ""
+
+imagePullSecrets: []
+
 image:
   repository: chatbot-backend
   pullPolicy: IfNotPresent
