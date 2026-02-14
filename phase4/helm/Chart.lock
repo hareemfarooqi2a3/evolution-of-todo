@@ -5,5 +5,11 @@ dependencies:
 - name: chatbot-frontend
   repository: file://./chatbot-frontend
   version: 0.1.0
-digest: sha256:c28986218e5a85a14e68a265657308c773f2ac1061d8942354dae4a8a20a1b60
-generated: "2026-02-10T05:32:04.79559+05:00"
+- name: reminders-service
+  repository: file://./reminders-service
+  version: 0.1.0
+- name: recurring-tasks-service
+  repository: file://./recurring-tasks-service
+  version: 0.1.0
+digest: sha256:30fc87a3d30d7f988776663138cf5cd89166c986081acefd141fc7a9af0e05e7
+generated: "2026-02-14T23:36:56.8527497+05:00"

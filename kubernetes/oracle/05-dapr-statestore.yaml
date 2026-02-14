@@ -15,6 +15,3 @@ spec:
       secretKeyRef:
         name: todo-secrets
         key: DATABASE_URL
-  scopes:
-    - backend
-    - chatbot-backend

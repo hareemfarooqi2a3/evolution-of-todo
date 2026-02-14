@@ -9,7 +9,7 @@
 chatbot-backend:
   replicaCount: 1
   image:
-    repository: <REGION>.ocir.io/<NAMESPACE>/todo-chatbot-backend
+    repository: bom.ocir.io/bmmmbiwfbeku/todo-chatbot-backend
     tag: "latest"
     pullPolicy: Always
   imagePullSecrets:
@@ -36,7 +36,7 @@ chatbot-backend:
 chatbot-frontend:
   replicaCount: 1
   image:
-    repository: <REGION>.ocir.io/<NAMESPACE>/todo-chatbot-frontend
+    repository: bom.ocir.io/bmmmbiwfbeku/todo-chatbot-frontend
     tag: "latest"
     pullPolicy: Always
   imagePullSecrets:
@@ -57,7 +57,7 @@ backend:
   enabled: true
   replicaCount: 1
   image:
-    repository: <REGION>.ocir.io/<NAMESPACE>/todo-backend
+    repository: bom.ocir.io/bmmmbiwfbeku/todo-backend
     tag: "latest"
     pullPolicy: Always
   imagePullSecrets:
@@ -88,7 +88,7 @@ reminders-service:
   enabled: true
   replicaCount: 1
   image:
-    repository: <REGION>.ocir.io/<NAMESPACE>/todo-reminders
+    repository: bom.ocir.io/bmmmbiwfbeku/todo-reminders
     tag: "latest"
     pullPolicy: Always
   imagePullSecrets:
@@ -115,7 +115,7 @@ recurring-tasks-service:
   enabled: true
   replicaCount: 1
   image:
-    repository: <REGION>.ocir.io/<NAMESPACE>/todo-recurring
+    repository: bom.ocir.io/bmmmbiwfbeku/todo-recurring
     tag: "latest"
     pullPolicy: Always
   imagePullSecrets:

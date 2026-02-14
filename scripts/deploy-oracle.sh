@@ -16,10 +16,10 @@ set -euo pipefail
 # ============================================================================
 # CONFIGURATION - Update these values for your Oracle Cloud environment
 # ============================================================================
-OCI_REGION="${OCI_REGION:-iad}"                    # e.g., iad, phx, eu-frankfurt-1
-OCIR_ENDPOINT="${OCIR_ENDPOINT:-iad.ocir.io}"      # Container registry endpoint
-TENANCY_NAMESPACE="${TENANCY_NAMESPACE:-your-tenancy-namespace}"
-OKE_CLUSTER_ID="${OKE_CLUSTER_ID:-}"               # OKE cluster OCID
+OCI_REGION="${OCI_REGION:-ap-mumbai-1}"
+OCIR_ENDPOINT="${OCIR_ENDPOINT:-bom.ocir.io}"
+TENANCY_NAMESPACE="${TENANCY_NAMESPACE:-bmmmbiwfbeku}"
+OKE_CLUSTER_ID="${OKE_CLUSTER_ID:-ocid1.cluster.oc1.ap-mumbai-1.aaaaaaaa7h7yawtpttx7ihs2yk4hhvm66ipirksbvpunf4itzcihvqle5uwa}"
 
 # Image names
 IMAGE_PREFIX="${OCIR_ENDPOINT}/${TENANCY_NAMESPACE}"

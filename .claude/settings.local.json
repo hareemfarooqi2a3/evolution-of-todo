@@ -19,7 +19,21 @@
       "WebFetch(domain:evolution-of-todo-phase3.vercel.app)",
       "Bash(git commit:*)",
       "Bash(dir:*)",
-      "Bash(kubectl logs:*)"
+      "Bash(kubectl logs:*)",
+      "Bash(kubectl cluster-info:*)",
+      "Bash(kubectl get:*)",
+      "Bash(oci ce cluster list:*)",
+      "Bash(oci ce node-pool list:*)",
+      "Bash(oci ce node-pool get:*)",
+      "Bash(oci os ns get:*)",
+      "Bash(kubectl apply:*)",
+      "Bash(kubectl create secret generic:*)",
+      "Bash(oci ce node-pool update:*)",
+      "Bash(oci iam availability-domain list:*)",
+      "Bash(oci compute shape list:*)",
+      "Bash(helm repo add:*)",
+      "Bash(helm repo update:*)",
+      "Bash(helm upgrade:*)"
     ]
   }
 }
