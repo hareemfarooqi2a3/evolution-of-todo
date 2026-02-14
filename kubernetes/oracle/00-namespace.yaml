@@ -1,0 +1,27 @@
+# [Task]: T-Phase5-Oracle
+# [From]: specs/001-todo-crud/plan.md - Phase V Cloud Deployment
+# Oracle OKE namespace configuration for Evolution of Todo
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: todo-app
+  labels:
+    app: evolution-of-todo
+    environment: production
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kafka
+  labels:
+    app: evolution-of-todo
+    component: messaging
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: dapr-system
+  labels:
+    app: evolution-of-todo
+    component: dapr

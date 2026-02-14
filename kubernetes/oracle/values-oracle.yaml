@@ -1,0 +1,137 @@
+# [Task]: T-Phase5-Oracle
+# [From]: specs/001-todo-crud/plan.md - Phase V Cloud Deployment
+# Helm values override for Oracle OKE deployment
+# Usage: helm upgrade --install todo-release ./phase4/helm -f kubernetes/oracle/values-oracle.yaml
+#
+# IMPORTANT: Replace all <PLACEHOLDER> values before deploying
+
+# Chatbot Backend (Phase III)
+chatbot-backend:
+  replicaCount: 1
+  image:
+    repository: <REGION>.ocir.io/<NAMESPACE>/todo-chatbot-backend
+    tag: "latest"
+    pullPolicy: Always
+  imagePullSecrets:
+    - name: ocir-secret
+  service:
+    type: ClusterIP
+    port: 8000
+  env:
+    OPENAI_API_KEY: ""      # Loaded from K8s secret
+    DATABASE_URL: ""         # Loaded from K8s secret
+    BETTER_AUTH_SECRET: ""   # Loaded from K8s secret
+    DAPR_ENABLED: "true"
+    DAPR_PUBSUB_NAME: "pubsub"
+    DAPR_TODO_EVENTS_TOPIC: "todo-events"
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 250m
+    limits:
+      memory: 512Mi
+      cpu: 500m
+
+# Chatbot Frontend (Phase III)
+chatbot-frontend:
+  replicaCount: 1
+  image:
+    repository: <REGION>.ocir.io/<NAMESPACE>/todo-chatbot-frontend
+    tag: "latest"
+    pullPolicy: Always
+  imagePullSecrets:
+    - name: ocir-secret
+  service:
+    type: ClusterIP
+    port: 3000
+  resources:
+    requests:
+      memory: 128Mi
+      cpu: 100m
+    limits:
+      memory: 256Mi
+      cpu: 250m
+
+# Backend API (Phase II)
+backend:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: <REGION>.ocir.io/<NAMESPACE>/todo-backend
+    tag: "latest"
+    pullPolicy: Always
+  imagePullSecrets:
+    - name: ocir-secret
+  service:
+    type: ClusterIP
+    port: 8000
+  env:
+    DATABASE_URL: ""
+    BETTER_AUTH_SECRET: ""
+    DAPR_ENABLED: "true"
+    DAPR_PUBSUB_NAME: "pubsub"
+    DAPR_TODO_EVENTS_TOPIC: "todo-events"
+  dapr:
+    enabled: true
+    appId: "backend"
+    appPort: 8000
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 250m
+    limits:
+      memory: 512Mi
+      cpu: 500m
+
+# Reminders Service (Phase V)
+reminders-service:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: <REGION>.ocir.io/<NAMESPACE>/todo-reminders
+    tag: "latest"
+    pullPolicy: Always
+  imagePullSecrets:
+    - name: ocir-secret
+  env:
+    KAFKA_BOOTSTRAP_SERVERS: "todo-kafka-kafka-bootstrap.kafka.svc.cluster.local:9092"
+    KAFKA_TOPIC: "todo-events"
+    KAFKA_GROUP_ID: "reminders-service-group"
+    NOTIFICATION_METHOD: "console"
+  dapr:
+    enabled: true
+    appId: "reminders-service"
+    appPort: "8080"
+  resources:
+    requests:
+      memory: 128Mi
+      cpu: 100m
+    limits:
+      memory: 256Mi
+      cpu: 250m
+
+# Recurring Tasks Service (Phase V)
+recurring-tasks-service:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: <REGION>.ocir.io/<NAMESPACE>/todo-recurring
+    tag: "latest"
+    pullPolicy: Always
+  imagePullSecrets:
+    - name: ocir-secret
+  env:
+    KAFKA_BOOTSTRAP_SERVERS: "todo-kafka-kafka-bootstrap.kafka.svc.cluster.local:9092"
+    KAFKA_TOPIC: "todo-events"
+    KAFKA_GROUP_ID: "recurring-tasks-service-group"
+  dapr:
+    enabled: true
+    appId: "recurring-tasks-service"
+    appPort: "8080"
+  resources:
+    requests:
+      memory: 128Mi
+      cpu: 100m
+    limits:
+      memory: 256Mi
+      cpu: 250m

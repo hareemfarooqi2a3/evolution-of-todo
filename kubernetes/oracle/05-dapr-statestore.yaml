@@ -1,0 +1,20 @@
+# [Task]: T-Phase5-Oracle
+# [From]: specs/001-todo-crud/plan.md - Phase V Dapr Integration
+# Dapr State Store component using PostgreSQL (Neon) on Oracle OKE
+---
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: statestore
+  namespace: todo-app
+spec:
+  type: state.postgresql
+  version: v1
+  metadata:
+    - name: connectionString
+      secretKeyRef:
+        name: todo-secrets
+        key: DATABASE_URL
+  scopes:
+    - backend
+    - chatbot-backend

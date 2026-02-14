@@ -1,0 +1,69 @@
+# [Task]: T-Phase5-Oracle
+# [From]: specs/001-todo-crud/plan.md - Phase V Event-Driven Architecture
+# Strimzi Kafka cluster for Oracle OKE
+# Prerequisites: Install Strimzi operator first:
+#   kubectl create namespace kafka
+#   kubectl apply -f https://strimzi.io/install/latest?namespace=kafka -n kafka
+#   kubectl wait --for=condition=ready pod -l name=strimzi-cluster-operator -n kafka --timeout=300s
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: Kafka
+metadata:
+  name: todo-kafka
+  namespace: kafka
+  labels:
+    app: evolution-of-todo
+    component: messaging
+spec:
+  kafka:
+    version: 3.7.0
+    replicas: 1
+    listeners:
+      - name: plain
+        port: 9092
+        type: internal
+        tls: false
+      - name: tls
+        port: 9093
+        type: internal
+        tls: true
+    config:
+      # Single-node optimizations
+      offsets.topic.replication.factor: 1
+      transaction.state.log.replication.factor: 1
+      transaction.state.log.min.isr: 1
+      default.replication.factor: 1
+      min.insync.replicas: 1
+      # Performance tuning
+      num.partitions: 3
+      log.retention.hours: 168
+      log.segment.bytes: 1073741824
+    storage:
+      type: persistent-claim
+      size: 10Gi
+      class: oci-bv  # Oracle Block Volume storage class
+      deleteClaim: false
+    resources:
+      requests:
+        memory: 512Mi
+        cpu: 250m
+      limits:
+        memory: 1Gi
+        cpu: 500m
+  zookeeper:
+    replicas: 1
+    storage:
+      type: persistent-claim
+      size: 5Gi
+      class: oci-bv
+      deleteClaim: false
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 100m
+      limits:
+        memory: 512Mi
+        cpu: 250m
+  entityOperator:
+    topicOperator: {}
+    userOperator: {}

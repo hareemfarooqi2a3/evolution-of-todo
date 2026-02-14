@@ -1,0 +1,5 @@
+apiVersion: v2
+name: recurring-tasks-service
+description: Helm chart for the Recurring Tasks Service - auto-creates next occurrence for recurring tasks
+version: 0.1.0
+appVersion: "1.0.0"

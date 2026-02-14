@@ -1,0 +1,25 @@
+# [Task]: T-Phase5-Oracle
+# [From]: specs/001-todo-crud/plan.md - Phase V Dapr Integration
+# Dapr PubSub component using Strimzi Kafka on Oracle OKE
+---
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: pubsub
+  namespace: todo-app
+spec:
+  type: pubsub.kafka
+  version: v1
+  metadata:
+    - name: brokers
+      value: "todo-kafka-kafka-bootstrap.kafka.svc.cluster.local:9092"
+    - name: consumerGroup
+      value: "todo-service-group"
+    - name: authType
+      value: "none"
+    - name: maxMessageBytes
+      value: "1048576"
+    - name: consumeRetryInterval
+      value: "200ms"
+    - name: version
+      value: "3.7.0"

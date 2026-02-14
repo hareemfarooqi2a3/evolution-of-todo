@@ -11,3 +11,11 @@ dependencies:
   - name: chatbot-frontend
     version: "0.1.0"
     repository: "file://./chatbot-frontend"
+  - name: reminders-service
+    version: "0.1.0"
+    repository: "file://./reminders-service"
+    condition: reminders-service.enabled
+  - name: recurring-tasks-service
+    version: "0.1.0"
+    repository: "file://./recurring-tasks-service"
+    condition: recurring-tasks-service.enabled

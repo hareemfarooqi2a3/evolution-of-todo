@@ -1,0 +1,49 @@
+# [Task]: T-Phase5-Oracle
+# [From]: specs/001-todo-crud/plan.md - Phase V Event-Driven Architecture
+# Kafka topics for todo event streaming
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: todo-events
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: todo-kafka
+    app: evolution-of-todo
+spec:
+  partitions: 3
+  replicas: 1
+  config:
+    retention.ms: 604800000    # 7 days
+    cleanup.policy: delete
+    segment.bytes: 1073741824  # 1 GB
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: reminders
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: todo-kafka
+    app: evolution-of-todo
+spec:
+  partitions: 3
+  replicas: 1
+  config:
+    retention.ms: 604800000
+    cleanup.policy: delete
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: task-updates
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: todo-kafka
+    app: evolution-of-todo
+spec:
+  partitions: 3
+  replicas: 1
+  config:
+    retention.ms: 259200000    # 3 days
+    cleanup.policy: delete

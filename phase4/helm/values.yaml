@@ -61,6 +61,14 @@ frontend:
     BETTER_AUTH_SECRET: ""
     DATABASE_URL: ""
 
+# Global settings for Oracle OKE deployment
+global:
+  imagePullSecrets:
+    - name: ocir-secret
+  # Oracle OCIR registry prefix - override with your region/namespace
+  # Example: iad.ocir.io/your-tenancy-namespace
+  imageRegistry: ""
+
 # Reminders service (Phase V)
 reminders-service:
   enabled: true
@@ -68,9 +76,12 @@ reminders-service:
   image:
     repository: reminders-service
     tag: "1.0.0"
+  imagePullSecrets:
+    - name: ocir-secret
   env:
-    KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+    KAFKA_BOOTSTRAP_SERVERS: "todo-kafka-kafka-bootstrap.kafka.svc.cluster.local:9092"
     KAFKA_TOPIC: "todo-events"
+    KAFKA_GROUP_ID: "reminders-service-group"
     NOTIFICATION_METHOD: "console"
     # Optional email config
     SMTP_HOST: ""
@@ -80,6 +91,10 @@ reminders-service:
     SMTP_FROM: ""
     # Optional webhook config
     WEBHOOK_URL: ""
+  dapr:
+    enabled: true
+    appId: "reminders-service"
+    appPort: "8080"
 
 # Recurring tasks service (Phase V)
 recurring-tasks-service:
@@ -88,7 +103,14 @@ recurring-tasks-service:
   image:
     repository: recurring-tasks-service
     tag: "1.0.0"
+  imagePullSecrets:
+    - name: ocir-secret
   env:
-    KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+    KAFKA_BOOTSTRAP_SERVERS: "todo-kafka-kafka-bootstrap.kafka.svc.cluster.local:9092"
     KAFKA_TOPIC: "todo-events"
+    KAFKA_GROUP_ID: "recurring-tasks-service-group"
     DATABASE_URL: ""
+  dapr:
+    enabled: true
+    appId: "recurring-tasks-service"
+    appPort: "8080"

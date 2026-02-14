@@ -1,0 +1,224 @@
+# [Task]: T-Phase5-Oracle
+# [From]: specs/001-todo-crud/plan.md - Phase V CI/CD Pipeline
+# GitHub Actions CI/CD pipeline for Oracle OKE deployment
+name: Deploy to Oracle OKE
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      deploy_kafka:
+        description: 'Deploy/update Kafka cluster'
+        required: false
+        default: 'false'
+        type: boolean
+
+env:
+  OCI_REGION: ${{ secrets.OCI_REGION }}
+  OCIR_ENDPOINT: ${{ secrets.OCI_REGION }}.ocir.io
+  TENANCY_NAMESPACE: ${{ secrets.OCI_TENANCY_NAMESPACE }}
+  OKE_CLUSTER_ID: ${{ secrets.OKE_CLUSTER_ID }}
+  IMAGE_TAG: ${{ github.sha }}
+  NAMESPACE: todo-app
+  HELM_RELEASE_NAME: todo-release
+
+jobs:
+  build-and-push:
+    name: Build & Push Docker Images
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Login to Oracle Container Registry (OCIR)
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.OCIR_ENDPOINT }}
+          username: ${{ secrets.OCI_TENANCY_NAMESPACE }}/oracleidentitycloudservice/${{ secrets.OCI_USER_EMAIL }}
+          password: ${{ secrets.OCI_AUTH_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push chatbot-backend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./phase3_ai-chatbot/chatbot_backend
+          file: ./phase3_ai-chatbot/chatbot_backend/Dockerfile
+          push: true
+          tags: |
+            ${{ env.OCIR_ENDPOINT }}/${{ env.TENANCY_NAMESPACE }}/todo-chatbot-backend:${{ env.IMAGE_TAG }}
+            ${{ env.OCIR_ENDPOINT }}/${{ env.TENANCY_NAMESPACE }}/todo-chatbot-backend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push chatbot-frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./chatbot_frontend_nextjs
+          file: ./chatbot_frontend_nextjs/Dockerfile
+          push: true
+          tags: |
+            ${{ env.OCIR_ENDPOINT }}/${{ env.TENANCY_NAMESPACE }}/todo-chatbot-frontend:${{ env.IMAGE_TAG }}
+            ${{ env.OCIR_ENDPOINT }}/${{ env.TENANCY_NAMESPACE }}/todo-chatbot-frontend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push backend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./phase2_webapp/backend
+          file: ./phase2_webapp/backend/Dockerfile
+          push: true
+          tags: |
+            ${{ env.OCIR_ENDPOINT }}/${{ env.TENANCY_NAMESPACE }}/todo-backend:${{ env.IMAGE_TAG }}
+            ${{ env.OCIR_ENDPOINT }}/${{ env.TENANCY_NAMESPACE }}/todo-backend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push reminders-service
+        uses: docker/build-push-action@v5
+        with:
+          context: ./phase5/reminders_service
+          file: ./phase5/reminders_service/Dockerfile
+          push: true
+          tags: |
+            ${{ env.OCIR_ENDPOINT }}/${{ env.TENANCY_NAMESPACE }}/todo-reminders:${{ env.IMAGE_TAG }}
+            ${{ env.OCIR_ENDPOINT }}/${{ env.TENANCY_NAMESPACE }}/todo-reminders:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push recurring-tasks-service
+        uses: docker/build-push-action@v5
+        with:
+          context: ./recurring_tasks_service
+          file: ./recurring_tasks_service/Dockerfile
+          push: true
+          tags: |
+            ${{ env.OCIR_ENDPOINT }}/${{ env.TENANCY_NAMESPACE }}/todo-recurring:${{ env.IMAGE_TAG }}
+            ${{ env.OCIR_ENDPOINT }}/${{ env.TENANCY_NAMESPACE }}/todo-recurring:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    name: Deploy to Oracle OKE
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure OCI CLI
+        uses: oracle-actions/configure-kubectl-oke@v1.5.0
+        with:
+          cluster: ${{ secrets.OKE_CLUSTER_ID }}
+          region: ${{ secrets.OCI_REGION }}
+          tenancy: ${{ secrets.OCI_TENANCY_OCID }}
+          user: ${{ secrets.OCI_USER_OCID }}
+          fingerprint: ${{ secrets.OCI_FINGERPRINT }}
+          private_key: ${{ secrets.OCI_PRIVATE_KEY }}
+
+      - name: Verify cluster connection
+        run: kubectl get nodes
+
+      - name: Create namespace if not exists
+        run: |
+          kubectl create namespace ${{ env.NAMESPACE }} --dry-run=client -o yaml | kubectl apply -f -
+          kubectl create namespace kafka --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Setup secrets
+        run: |
+          kubectl create secret generic todo-secrets \
+            --from-literal=DATABASE_URL='${{ secrets.DATABASE_URL }}' \
+            --from-literal=OPENAI_API_KEY='${{ secrets.OPENAI_API_KEY }}' \
+            --from-literal=BETTER_AUTH_SECRET='${{ secrets.BETTER_AUTH_SECRET }}' \
+            -n ${{ env.NAMESPACE }} \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+          kubectl create secret docker-registry ocir-secret \
+            --docker-server=${{ env.OCIR_ENDPOINT }} \
+            --docker-username='${{ secrets.OCI_TENANCY_NAMESPACE }}/oracleidentitycloudservice/${{ secrets.OCI_USER_EMAIL }}' \
+            --docker-password='${{ secrets.OCI_AUTH_TOKEN }}' \
+            -n ${{ env.NAMESPACE }} \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Deploy Kafka (if requested or first run)
+        if: ${{ github.event.inputs.deploy_kafka == 'true' || github.event_name == 'push' }}
+        run: |
+          # Install Strimzi if not present
+          if ! kubectl get deployment strimzi-cluster-operator -n kafka 2>/dev/null; then
+            kubectl apply -f "https://strimzi.io/install/latest?namespace=kafka" -n kafka
+            kubectl wait --for=condition=ready pod -l name=strimzi-cluster-operator \
+              -n kafka --timeout=300s
+          fi
+
+          # Deploy Kafka cluster and topics
+          kubectl apply -f kubernetes/oracle/02-strimzi-kafka.yaml
+          kubectl apply -f kubernetes/oracle/03-kafka-topics.yaml
+
+      - name: Deploy Dapr components
+        run: |
+          # Install Dapr if not present
+          if ! kubectl get deployment dapr-operator -n dapr-system 2>/dev/null; then
+            helm repo add dapr https://dapr.github.io/helm-charts/
+            helm repo update
+            helm upgrade --install dapr dapr/dapr \
+              --namespace dapr-system \
+              --create-namespace \
+              --wait
+          fi
+
+          kubectl apply -f kubernetes/oracle/04-dapr-pubsub.yaml
+          kubectl apply -f kubernetes/oracle/05-dapr-statestore.yaml
+          kubectl apply -f kubernetes/oracle/06-dapr-secrets.yaml
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v4
+
+      - name: Package Helm dependencies
+        run: |
+          cd phase4/helm
+          helm dependency update
+          cd ../..
+
+      - name: Deploy with Helm
+        run: |
+          IMAGE_PREFIX="${{ env.OCIR_ENDPOINT }}/${{ env.TENANCY_NAMESPACE }}"
+
+          helm upgrade --install ${{ env.HELM_RELEASE_NAME }} ./phase4/helm \
+            --namespace ${{ env.NAMESPACE }} \
+            --set chatbot-backend.image.repository="${IMAGE_PREFIX}/todo-chatbot-backend" \
+            --set chatbot-backend.image.tag="${{ env.IMAGE_TAG }}" \
+            --set chatbot-backend.imagePullSecrets[0].name=ocir-secret \
+            --set chatbot-frontend.image.repository="${IMAGE_PREFIX}/todo-chatbot-frontend" \
+            --set chatbot-frontend.image.tag="${{ env.IMAGE_TAG }}" \
+            --set chatbot-frontend.imagePullSecrets[0].name=ocir-secret \
+            --set backend.image.repository="${IMAGE_PREFIX}/todo-backend" \
+            --set backend.image.tag="${{ env.IMAGE_TAG }}" \
+            --set reminders-service.image.repository="${IMAGE_PREFIX}/todo-reminders" \
+            --set reminders-service.image.tag="${{ env.IMAGE_TAG }}" \
+            --set reminders-service.enabled=true \
+            --set recurring-tasks-service.image.repository="${IMAGE_PREFIX}/todo-recurring" \
+            --set recurring-tasks-service.image.tag="${{ env.IMAGE_TAG }}" \
+            --set recurring-tasks-service.enabled=true \
+            --atomic --timeout 10m
+
+      - name: Apply Ingress
+        run: kubectl apply -f kubernetes/oracle/07-ingress.yaml
+
+      - name: Deployment status
+        run: |
+          echo "=== Pods ==="
+          kubectl get pods -n ${{ env.NAMESPACE }}
+          echo ""
+          echo "=== Services ==="
+          kubectl get svc -n ${{ env.NAMESPACE }}
+          echo ""
+          echo "=== Ingress ==="
+          kubectl get ingress -n ${{ env.NAMESPACE }}
+          echo ""
+          echo "=== External IP ==="
+          kubectl get svc -n ${{ env.NAMESPACE }} -l app.kubernetes.io/name=ingress-nginx \
+            -o jsonpath='{.items[0].status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "Pending..."
