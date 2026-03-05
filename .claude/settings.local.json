@@ -33,7 +33,21 @@
       "Bash(oci compute shape list:*)",
       "Bash(helm repo add:*)",
       "Bash(helm repo update:*)",
-      "Bash(helm upgrade:*)"
+      "Bash(helm upgrade:*)",
+      "Bash(docker login:*)",
+      "Bash(docker buildx:*)",
+      "Bash(docker run:*)",
+      "Bash(kubectl config current-context:*)",
+      "Bash(oci iam compartment list:*)",
+      "Bash(oci iam region:*)",
+      "Bash(git -C /d/projects/evolution-of-todo log --oneline -30)",
+      "Bash(git -C /d/projects/evolution-of-todo log --all --oneline --grep=\"oracle\\\\|Oracle\\\\|OKE\\\\|oke\\\\|OCIR\\\\|ocir\")",
+      "Bash(git -C /d/projects/evolution-of-todo log --oneline -50 --format=\"%H %s\")",
+      "Bash(git log:*)",
+      "Bash(ls:*)",
+      "Bash(gh auth:*)",
+      "Bash(cmd /c \"dir D:\\\\projects /b\")",
+      "Bash(cmd /c:*)"
     ]
   }
 }
